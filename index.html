@@ -139,6 +139,7 @@
 				console.log(res);
 			});
 			const getBalance = async () => {
+				if (!address.value) return alert("Enter an address");
 				const res = await fetch(
 					`https://api.whatsonchain.com/v1/bsv/main/address/${address.value}/balance`
 				).then((res) => res.json());
