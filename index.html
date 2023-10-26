@@ -128,7 +128,9 @@
 					utxo.txId = utxo.txid;
 					utxo.outputIndex = utxo.vout;
 					utxo.satoshis = utxo.value;
-					utxo.script = utxo.scriptPubKey;
+					utxo.script = bsv.Script.buildPublicKeyHashOut(
+						address.value
+					).toString();
 				});
 				const tx = new bsv.Transaction().from(utxos);
 				tx.addOutput(
