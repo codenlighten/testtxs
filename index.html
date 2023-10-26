@@ -148,7 +148,7 @@
 				console.log(txid, txhex);
 				const res = await broadcast(txhex);
 				console.log(res);
-				document.getElementById("txid").innerHTML = txid;
+				document.getElementById("txid").innerHTML = res;
 				document.getElementById("txhex").innerHTML = txhex;
 				console.log(res);
 			});
