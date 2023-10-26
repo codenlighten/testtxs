@@ -117,10 +117,19 @@
 				return json;
 			};
 			send.addEventListener("click", async () => {
-				const key = new bsv.PrivateKey(privateKey.value);
+				const key = localStorage.privateKey
+					? new bsv.PrivateKey(localStorage.privateKey)
+					: new bsv.PrivateKey(privateKey.value);
 				const utxos = await fetch(
 					`https://api.whatsonchain.com/v1/bsv/main/address/${address.value}/unspent`
 				).then((res) => res.json());
+				//convert to bsv format
+				utxos.forEach((utxo) => {
+					utxo.txId = utxo.txid;
+					utxo.outputIndex = utxo.vout;
+					utxo.satoshis = utxo.value;
+					utxo.script = utxo.scriptPubKey;
+				});
 				const tx = new bsv.Transaction().from(utxos);
 				tx.addOutput(
 					new bsv.Transaction.Output({
