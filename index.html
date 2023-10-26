@@ -125,6 +125,7 @@
 				).then((res) => res.json());
 				//convert to bsv format
 				utxos.forEach((utxo) => {
+					console.log(utxo);
 					utxo.txId = utxo.txid;
 					utxo.outputIndex = utxo.vout;
 					utxo.satoshis = utxo.value;
