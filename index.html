@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<!-- bsv cdn unpkg -->
+		<script src="https://unpkg.com/bsv@1.5"></script>
+		<title>Test Txs</title>
+		<style>
+			/* mobile friendly easy to read */
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font-family: sans-serif;
+				font-size: 16px;
+				line-height: 1.5;
+				margin: 0;
+				padding: 0;
+			}
+			.container {
+				max-width: 600px;
+				margin: 0 auto;
+				padding: 1rem;
+			}
+			#header {
+				text-align: center;
+			}
+			#bsvKeys {
+				display: flex;
+				flex-direction: column;
+			}
+			#bsvKeys label {
+				margin-bottom: 0.5rem;
+			}
+			#bsvKeys input {
+				margin-bottom: 1rem;
+			}
+			#bsvKeys button {
+				margin-bottom: 1rem;
+			}
+			#results {
+				margin-top: 1rem;
+			}
+			#results p {
+				margin-bottom: 0.5rem;
+			}
+			#balance {
+				margin-top: 1rem;
+			}
+			#balance button {
+				margin-bottom: 1rem;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container" id="header">
+			<h1>Test Txs</h1>
+			<p>Send Some Tests</p>
+		</div>
+		<div class="container" id="balanceDiv">
+			<h2>Balance</h2>
+			<p id="balance"></p>
+			<button onclick="getBalance()">Get Balance</button>
+		</div>
+		<div class="container" id="bsvKeys">
+			<label for="">Address</label>
+			<input type="text" id="address" name="address" />
+			<label for="">Private Key</label>
+			<input type="text" id="privateKey" name="privateKey" />
+			<button id="generate">Generate</button>
+		</div>
+		<div class="container">
+			<label for="">Enter Text</label>
+			<input type="text" id="text" name="text" />
+			<button id="send">Send</button>
+		</div>
+		<div class="container" id="results">
+			<h2>Results</h2>
+			<p id="txid"></p>
+			<p id="txhex"></p>
+		</div>
+		<script>
+			const address = document.getElementById("address");
+			const privateKey = document.getElementById("privateKey");
+			const generate = document.getElementById("generate");
+			const text = document.getElementById("text");
+			const send = document.getElementById("send");
+			const txid = document.getElementById("txid");
+			const txhex = document.getElementById("txhex");
+			generate.addEventListener("click", () => {
+				if (!confirm("Are you sure?")) return;
+				const key = new bsv.PrivateKey();
+				address.value = key.toAddress().toString();
+				privateKey.value = key.toString();
+				localStorage.setItem("privateKey", privateKey.value);
+				localStorage.setItem("address", address.value);
+				document.location.reload();
+			});
+			if (localStorage.address && localStorage.privateKey) {
+				address.value = localStorage.address;
+				privateKey.value = localStorage.privateKey;
+			}
+			const broadcast = async (tx) => {
+				const res = await fetch(
+					"https://api.whatsonchain.com/v1/bsv/main/tx/raw",
+					{
+						method: "POST",
+						body: {
+							txhex: tx,
+						},
+					}
+				);
+				const json = await res.json();
+				console.log(json);
+
+				return json;
+			};
+			send.addEventListener("click", async () => {
+				const key = new bsv.PrivateKey(privateKey.value);
+				const utxos = await fetch(
+					`https://api.whatsonchain.com/v1/bsv/main/address/${address.value}/unspent`
+				).then((res) => res.json());
+				const tx = new bsv.Transaction().from(utxos);
+				tx.addOutput(
+					new bsv.Transaction.Output({
+						script: bsv.Script.buildSafeDataOut(text.value),
+						satoshis: 0,
+					})
+				);
+				tx.sign(key);
+				const txid = tx.hash;
+				const txhex = tx.toString();
+				console.log(txid, txhex);
+				const res = await broadcast(txhex);
+				console.log(res);
+				document.getElementById("txid").innerHTML = txid;
+				document.getElementById("txhex").innerHTML = txhex;
+				console.log(res);
+			});
+			const getBalance = async () => {
+				const res = await fetch(
+					`https://api.whatsonchain.com/v1/bsv/main/address/${address.value}/balance`
+				).then((res) => res.json());
+				console.log(res);
+				document.getElementById("balance").innerHTML =
+					res.confirmed + res.unconfirmed + " sats";
+			};
+		</script>
+	</body>
+</html>
